@@ -1,6 +1,9 @@
 package gostache
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 type Person struct {
 	Name string
@@ -13,5 +16,14 @@ func TestRenderString(t *testing.T) {
 	result := RenderString("Name: {{Name}}\nAge: {{Age}}", p)
 	if result != expected {
 		t.Error("RenderString did not pass.")
+	}
+}
+
+func TestRenderFile(t *testing.T) {
+	p := Person{"Triny", 7}
+	expected := "Name: Triny\nAge: 7"
+	result := RenderFile("a", p)
+	if !strings.Contains(result, expected) {
+		t.Error("RenderFile did not pass.")
 	}
 }
