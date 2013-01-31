@@ -27,3 +27,12 @@ func TestRenderFile(t *testing.T) {
 		t.Error("RenderFile did not pass.")
 	}
 }
+
+func TestRenderFileWithPartial(t *testing.T) {
+	p := Person{"Triny", 7}
+	expected := "Partial 7\n\nName: Triny\nAge: 7"
+	result := RenderFile("b", p)
+	if !strings.Contains(result, expected) {
+		t.Error("RenderFile with a partial template did not pass.")
+	}
+}

@@ -21,6 +21,26 @@ func (t *Template) parseBlock(body string) (string, error) {
 }
 
 func (t *Template) parsePartial(body string) (string, error) {
+	r := regexp.MustCompile(`{{>(\w+)}}`)
+	match := r.FindStringSubmatch(body)
+	if len(match) > 0 {
+		cwd := os.Getenv("CWD")
+		filename := match[1]
+		filepath := cwd + "templates/partials/" + filename + ".mustache"
+
+		f, err := os.Open(filepath)
+		f.Close()
+		if err != nil {
+			return "", err
+		}
+
+		partial_template, err := ioutil.ReadFile(filepath)
+		if err != nil {
+			return "", err
+		}
+
+		body = strings.Replace(body, "{{>"+filename+"}}", string(partial_template), 1)
+	}
 	return body, nil
 }
 
@@ -46,9 +66,9 @@ func (t *Template) Render() (string, error) {
 			break
 		}
 		switch {
-		case t.template[index+2:index+3] == "#" || t.template[index+2:index+3] == "^":
+		case body[index+2:index+3] == "#" || body[index+2:index+3] == "^":
 			body, err = t.parseBlock(body)
-		case t.template[index+2:index+3] == ">":
+		case body[index+2:index+3] == ">":
 			body, err = t.parsePartial(body)
 		default:
 			body, err = t.parseString(body)
