@@ -23,6 +23,7 @@ Quick example:
         result := gostache.RenderString("Name: {{Name}}, Age: {{Age}}", p)
     }
 
-gostache simply looks for mustaches in the string and when it finds one, it
-looks for an exported field with the same name, and if it finds one, it will
-use that as the value container of the mustache. 
+gostache simply looks for mustaches in the string (the first argument to
+gostache.RenderString) and when it finds one, it will look for an exported
+field in the structure (the second argument) with same name, and if it finds
+one, it will use that as the value container of the mustache. 
