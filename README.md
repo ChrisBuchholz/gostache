@@ -21,6 +21,7 @@ Quick example:
     func main() {
         p := Person{"Triny", 7}
         result := gostache.RenderString("Name: {{Name}}, Age: {{Age}}", p)
+        println(result); // Name: Triny, Age: 7
     }
 
 gostache simply looks for mustaches in the string (the first argument to
