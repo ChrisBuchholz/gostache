@@ -53,15 +53,29 @@ func (t *Template) ParsePartial(body string) (string, error) {
 // and replace it with the string value of the field in t.Context that matches
 // the named defined in the string-mustache pattern
 func (t *Template) ParseString(body string) (string, error) {
-	r := regexp.MustCompile(`{{(\w+)}}`)
+	r := regexp.MustCompile(`[\{]{2,3}(\w+)[\}]{2,3}`)
 	match := r.FindStringSubmatch(body)
+
 	if len(match) > 0 {
+		pattern := match[0]
 		fieldname := match[1]
+
 		v := reflect.ValueOf(t.Context)
 		value := v.FieldByName(fieldname)
-		str_value := fmt.Sprintf("%v", value.Interface())
-		body = strings.Replace(body, "{{"+fieldname+"}}", str_value, 1)
+		new_str := fmt.Sprintf("%v", value.Interface())
+
+		var old_str string
+
+		if len(pattern) == (len(fieldname) + 4) {
+			old_str = "{{" + fieldname + "}}"
+			new_str = HTMLEscape(new_str)
+		} else {
+			old_str = "{{{" + fieldname + "}}}"
+		}
+
+		body = strings.Replace(body, old_str, new_str, 1)
 	}
+
 	return body, nil
 }
 
@@ -127,4 +141,21 @@ func RenderFile(filename string, context interface{}) string {
 
 	body := RenderString(string(template), context)
 	return body
+}
+
+// HTMLEscape replaces all applicable characters to HTML entities
+func HTMLEscape(str string) string {
+	chars := map[string]string{
+		"\"": "&quot;",
+		"'":  "&apos;",
+		"&":  "&amp;",
+		"<":  "&lt;",
+		">":  "&gt;",
+	}
+
+	for o, n := range chars {
+		str = strings.Replace(str, o, n, -1)
+	}
+
+	return str
 }
