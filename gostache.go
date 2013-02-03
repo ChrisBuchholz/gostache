@@ -86,12 +86,6 @@ func (t *Template) ParseString(body string) (string, error) {
 	return body, nil
 }
 
-// Render will loop over the content of t.Template as long as it can find the
-// mustache prefix `{{`
-// when it finds one, it will determine if its a section, partial or a string
-// -pattern and then tell either parseSection, parsePartial or parseString
-// to parse it
-
 // Render will consecutively call t.ParsePartial, t.ParseSection and
 // t.ParseString on t.Template 
 // The order of the calls are quite important - if you for example call
