@@ -20,10 +20,10 @@ func (t *Template) ParseSection(body string) (string, error) {
 	return body, nil
 }
 
-// ParsePartial will find the first occurence of the partial-mustache pattern
+// ParsePartial will find all  occurences of the partial-mustache pattern
 // in body and replace it with the content of the partial template file that
 // matches the name used in the partial-mustache pattern if any such file exist
-// parsePartial assumes that partials as placed inside the
+// parsePartial assumes that partials are placed inside the
 // templates/partials/ directory in the current-working-directory
 func (t *Template) ParsePartial(body string) (string, error) {
 	r := regexp.MustCompile(`{{>(\w+)}}`)
@@ -44,36 +44,41 @@ func (t *Template) ParsePartial(body string) (string, error) {
 			return "", err
 		}
 
-		body = strings.Replace(body, "{{>"+filename+"}}", string(partial_template), 1)
+		body = strings.Replace(body, "{{>"+filename+"}}", string(partial_template), -1)
 	}
 	return body, nil
 }
 
-// ParseString will find the first occurence of the string-mustache pattern
-// and replace it with the string value of the field in t.Context that matches
-// the named defined in the string-mustache pattern
+// ParseString will find all occurences of the triple- and double-mustache
+// pattern and replace it with the string value of the field in t.Context that
+// matches and one exist
 func (t *Template) ParseString(body string) (string, error) {
-	r := regexp.MustCompile(`[\{]{2,3}(\w+)[\}]{2,3}`)
-	match := r.FindStringSubmatch(body)
+	triple := regexp.MustCompile(`{{{(\w+)}}}`)
+	double := regexp.MustCompile(`{{(\w+)}}`)
+	rgs := [2]*regexp.Regexp{triple, double}
+	for _, r := range rgs {
+		matches := r.FindAllStringSubmatch(body, -1)
+		for _, match := range matches {
+			if len(match) > 0 {
+				pattern := match[0]
+				fieldname := match[1]
 
-	if len(match) > 0 {
-		pattern := match[0]
-		fieldname := match[1]
+				v := reflect.ValueOf(t.Context)
+				value := v.FieldByName(fieldname)
+				new_str := fmt.Sprintf("%v", value.Interface())
 
-		v := reflect.ValueOf(t.Context)
-		value := v.FieldByName(fieldname)
-		new_str := fmt.Sprintf("%v", value.Interface())
+				var old_str string
 
-		var old_str string
+				if len(pattern) == (len(fieldname) + 4) {
+					old_str = "{{" + fieldname + "}}"
+					new_str = HTMLEscape(new_str)
+				} else {
+					old_str = "{{{" + fieldname + "}}}"
+				}
 
-		if len(pattern) == (len(fieldname) + 4) {
-			old_str = "{{" + fieldname + "}}"
-			new_str = HTMLEscape(new_str)
-		} else {
-			old_str = "{{{" + fieldname + "}}}"
+				body = strings.Replace(body, old_str, new_str, -1)
+			}
 		}
-
-		body = strings.Replace(body, old_str, new_str, 1)
 	}
 
 	return body, nil
@@ -84,24 +89,27 @@ func (t *Template) ParseString(body string) (string, error) {
 // when it finds one, it will determine if its a section, partial or a string
 // -pattern and then tell either parseSection, parsePartial or parseString
 // to parse it
+
+// Render will consecutively call t.ParsePartial, t.ParseSection and
+// t.ParseString on t.Template 
+// The order of the calls are quite important - if you for example call
+// t.ParseString before t.ParseSection, the mustache-sections will lose
+// context
 func (t *Template) Render() (string, error) {
 	body := t.Template
 	err := errors.New("")
-	for {
-		index := strings.Index(body, "{{")
-		if index < 0 {
-			break
-		}
-		switch {
-		case body[index+2:index+3] == "#" || body[index+2:index+3] == "^":
-			body, err = t.ParseSection(body)
-		case body[index+2:index+3] == ">":
-			body, err = t.ParsePartial(body)
-		default:
-			body, err = t.ParseString(body)
-		}
+
+	body, err = t.ParsePartial(body)
+	if err != nil {
+		return "", err
 	}
 
+	body, err = t.ParseSection(body)
+	if err != nil {
+		return "", err
+	}
+
+	body, err = t.ParseString(body)
 	if err != nil {
 		return "", err
 	}
@@ -145,16 +153,16 @@ func RenderFile(filename string, context interface{}) string {
 
 // HTMLEscape replaces all applicable characters to HTML entities
 func HTMLEscape(str string) string {
-	chars := map[string]string{
-		"\"": "&quot;",
-		"'":  "&apos;",
-		"&":  "&amp;",
-		"<":  "&lt;",
-		">":  "&gt;",
+	chars := [5][2]string{
+		{"\"", "&quot;"},
+		{"'", "&apos;"},
+		{"&", "&amp;"},
+		{"<", "&lt;"},
+		{">", "&gt;"},
 	}
 
-	for o, n := range chars {
-		str = strings.Replace(str, o, n, -1)
+	for _, n := range chars {
+		str = strings.Replace(str, n[0], n[1], -1)
 	}
 
 	return str
