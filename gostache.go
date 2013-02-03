@@ -17,34 +17,37 @@ type Template struct {
 }
 
 func (t *Template) ParseSection(body string) (string, error) {
+
 	return body, nil
 }
 
-// ParsePartial will find all  occurences of the partial-mustache pattern
+// ParsePartial will find all occurences of the partial-mustache pattern
 // in body and replace it with the content of the partial template file that
 // matches the name used in the partial-mustache pattern if any such file exist
 // parsePartial assumes that partials are placed inside the
 // templates/partials/ directory in the current-working-directory
 func (t *Template) ParsePartial(body string) (string, error) {
 	r := regexp.MustCompile(`{{>(\w+)}}`)
-	match := r.FindStringSubmatch(body)
-	if len(match) > 0 {
-		cwd := os.Getenv("CWD")
-		filename := match[1]
-		filepath := cwd + "templates/partials/" + filename + ".mustache"
+	matches := r.FindAllStringSubmatch(body, -1)
+	for _, match := range matches {
+		if len(match) > 0 {
+			cwd := os.Getenv("CWD")
+			filename := match[1]
+			filepath := cwd + "templates/partials/" + filename + ".mustache"
 
-		f, err := os.Open(filepath)
-		f.Close()
-		if err != nil {
-			return "", err
+			f, err := os.Open(filepath)
+			f.Close()
+			if err != nil {
+				return "", err
+			}
+
+			partial_template, err := ioutil.ReadFile(filepath)
+			if err != nil {
+				return "", err
+			}
+
+			body = strings.Replace(body, "{{>"+filename+"}}", string(partial_template), -1)
 		}
-
-		partial_template, err := ioutil.ReadFile(filepath)
-		if err != nil {
-			return "", err
-		}
-
-		body = strings.Replace(body, "{{>"+filename+"}}", string(partial_template), -1)
 	}
 	return body, nil
 }
@@ -80,7 +83,6 @@ func (t *Template) ParseString(body string) (string, error) {
 			}
 		}
 	}
-
 	return body, nil
 }
 
