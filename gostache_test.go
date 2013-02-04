@@ -39,3 +39,13 @@ func TestRenderFileWithPartial(t *testing.T) {
 		t.Error("RenderFile with a partial template did not pass.")
 	}
 }
+
+func TestHTMLEscape(t *testing.T) {
+	str := "\"'&<>"
+	result := HTMLEscape(str)
+
+	expected := "&quot;&apos;&amp;&lt;&gt;"
+	if !strings.Contains(result, expected) {
+		t.Error("HTMLEscape did not pass.")
+	}
+}
