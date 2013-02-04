@@ -150,9 +150,9 @@ func RenderFile(filename string, context interface{}) string {
 // HTMLEscape replaces all applicable characters to HTML entities
 func HTMLEscape(str string) string {
 	chars := [5][2]string{
+		{"&", "&amp;"},
 		{"\"", "&quot;"},
 		{"'", "&apos;"},
-		{"&", "&amp;"},
 		{"<", "&lt;"},
 		{">", "&gt;"},
 	}
