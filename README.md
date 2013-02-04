@@ -50,11 +50,9 @@ directory that gostache is executed from (CWD).
 Using partials with gostache is a no-fuzz deal.
 
     {{>top}}
-
     {{content}}
-
     {{>bottom}}
 
-gostache will look for templates/partials/top.mustache and templates/partials/
-bottom.mustache inside CWD and replace `{{>top}}` and `{{>bottom}}` with the
-content of those files respectively.
+gostache will look for *templates/partials/top.mustache* and
+*templates/partials/bottom.mustache* inside CWD and replace `{{>top}}` and
+`{{>bottom}}` with the content of those files respectively.
