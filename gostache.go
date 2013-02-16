@@ -17,7 +17,6 @@ type Template struct {
 }
 
 func (t *Template) ParseSection(body string) (string, error) {
-
 	return body, nil
 }
 
@@ -109,7 +108,6 @@ func (t *Template) Render() (string, error) {
 	if err != nil {
 		return "", err
 	}
-
 	return body, nil
 }
 
@@ -137,12 +135,10 @@ func RenderFile(filename string, context interface{}) string {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	template, err := ioutil.ReadFile(filepath)
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	body := RenderString(string(template), context)
 	return body
 }
@@ -156,10 +152,8 @@ func HTMLEscape(str string) string {
 		{"<", "&lt;"},
 		{">", "&gt;"},
 	}
-
 	for _, n := range chars {
 		str = strings.Replace(str, n[0], n[1], -1)
 	}
-
 	return str
 }
